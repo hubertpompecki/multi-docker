@@ -1,0 +1,22 @@
+sudo: required
+services:
+  -docker
+
+before_install:
+  - docker build -t hpompecki/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run hpompecki/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t hpompecki/multi-client -f ./client/Dockerfile ./client
+  - docker build -t hpompecki/multi-worker -f ./worker/Dockerfile ./worker
+  - docker build -t hpompecki/multi-server -f ./server/Dockerfile ./server
+  - docker build -t hpompecki/multi-nginx -f ./nginx/Dockerfile ./nginx
+  #  Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push hpompecki/multi-client
+  - docker push hpompecki/multi-worker
+  - docker push hpompecki/multi-server
+  - docker push hpompecki/multi-nginx
